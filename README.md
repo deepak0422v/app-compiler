@@ -2,7 +2,8 @@
 
 Natural language → structured config → validated → executable app schema.
 
-## Live URL: https://app-compiler-43do1egze-deepak0422vs-projects.vercel.app/
+Live Demo:
+https://app-compiler-seven.vercel.app
 ---
 
 ## Architecture
