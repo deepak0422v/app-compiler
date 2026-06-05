@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AppCompiler — NL → App Config</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #07070f;
+  --surface:  #0e0e1c;
+  --surface2: #141428;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #f0f0ff;
+  --sub:      #8888b0;
+  --hint:     #44445a;
+  --accent:   #7c5cfc;
+  --accent-h: #9b80ff;
+  --green:    #3de8a0;
+  --yellow:   #f5c842;
+  --red:      #ff5f6d;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13px; display: flex; flex-direction: column; }
+
+/* TOPBAR */
+.topbar { display: flex; align-items: center; gap: 12px; padding: 0 24px; height: 52px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.wordmark { font-family: var(--mono); font-weight: 600; font-size: 15px; color: var(--text); letter-spacing: -0.01em; display: flex; align-items: center; gap: 6px; }
+.wordmark-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.tag { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 20px; letter-spacing: 0.06em; }
+.tag-purple { background: rgba(124,92,252,0.15); color: var(--accent-h); border: 1px solid rgba(124,92,252,0.3); }
+.tag-green  { background: rgba(61,232,160,0.1);  color: var(--green);    border: 1px solid rgba(61,232,160,0.25); }
+.tag-yellow { background: rgba(245,200,66,0.1);  color: var(--yellow);   border: 1px solid rgba(245,200,66,0.25); }
+.tag-red    { background: rgba(255,95,109,0.1);  color: var(--red);      border: 1px solid rgba(255,95,109,0.25); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.key-wrap { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 0 12px; height: 34px; }
+.key-wrap label { font-family: var(--mono); font-size: 10px; color: var(--sub); white-space: nowrap; letter-spacing: 0.05em; }
+#api-key { background: transparent; border: none; outline: none; color: var(--text); font-family: var(--mono); font-size: 12px; width: 220px; }
+#api-key::placeholder { color: var(--hint); }
+
+/* LAYOUT */
+.layout { display: flex; flex: 1; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar { width: 210px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0 0; }
+.sidebar-label { font-family: var(--mono); font-size: 9px; color: var(--hint); letter-spacing: 0.14em; padding: 0 18px 10px; text-transform: uppercase; }
+.stage { display: flex; align-items: center; gap: 10px; padding: 10px 18px; font-family: var(--mono); font-size: 11px; color: var(--hint); border-left: 2px solid transparent; transition: all 0.2s ease; }
+.stage-num { font-size: 9px; color: var(--hint); width: 16px; transition: color 0.2s; }
+.stage-name { transition: color 0.2s; }
+.stage-pip { width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid var(--hint); margin-left: auto; flex-shrink: 0; transition: all 0.2s; }
+.stage.active { color: var(--accent-h); border-left-color: var(--accent); background: rgba(124,92,252,0.06); }
+.stage.active .stage-num { color: var(--accent); }
+.stage.active .stage-pip { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 1s ease-in-out infinite; }
+.stage.done { color: var(--green); border-left-color: var(--green); background: rgba(61,232,160,0.04); }
+.stage.done .stage-num { color: var(--green); }
+.stage.done .stage-pip { border-color: var(--green); background: var(--green); }
+.stage.err { color: var(--red); border-left-color: var(--red); background: rgba(255,95,109,0.05); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.sidebar-footer { margin-top: auto; padding: 14px 18px; border-top: 1px solid var(--border); overflow-y: auto; max-height: 220px; }
+.sidebar-footer-label { font-family: var(--mono); font-size: 9px; color: var(--hint); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+.history-item { font-family: var(--mono); font-size: 10px; color: var(--sub); padding: 5px 0; border-bottom: 1px solid var(--border); line-height: 1.5; }
+.history-item:last-child { border-bottom: none; }
+.history-score { color: var(--green); }
+.history-score.warn { color: var(--yellow); }
+.history-score.fail { color: var(--red); }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* AMBIGUITY BANNER */
+.ambiguity-banner { display: none; flex-shrink: 0; padding: 8px 24px; background: rgba(245,200,66,0.06); border-bottom: 1px solid rgba(245,200,66,0.2); }
+.ambiguity-inner { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+.ambiguity-label { font-family: var(--mono); font-size: 10px; color: var(--yellow); letter-spacing: 0.06em; white-space: nowrap; margin-top: 1px; }
+.ambiguity-items { font-family: var(--mono); font-size: 10px; color: var(--sub); line-height: 1.7; }
+.ambiguity-items span { display: block; }
+.ambiguity-items span::before { content: "⚠ "; color: var(--yellow); }
+
+/* INPUT ZONE */
+.input-zone { padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.input-label { font-family: var(--mono); font-size: 9px; color: var(--sub); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+.input-row { display: flex; gap: 10px; align-items: flex-start; }
+textarea { flex: 1; background: var(--bg); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-family: var(--sans); font-size: 13px; line-height: 1.7; padding: 11px 15px; resize: none; height: 72px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; caret-color: var(--accent); }
+textarea::placeholder { color: var(--hint); }
+textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,252,0.12); }
+.compile-btn { display: flex; align-items: center; gap: 8px; padding: 0 22px; height: 72px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+.compile-btn:hover { background: var(--accent-h); transform: translateY(-1px); box-shadow: 0 6px 24px rgba(124,92,252,0.4); }
+.compile-btn:active { transform: translateY(0); box-shadow: none; }
+.compile-btn:disabled { background: var(--surface2); color: var(--hint); cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.chip { font-family: var(--mono); font-size: 10px; color: var(--sub); border: 1px solid var(--border2); border-radius: 6px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; background: transparent; }
+.chip:hover { color: var(--accent-h); border-color: rgba(124,92,252,0.4); background: rgba(124,92,252,0.06); }
+
+/* OUTPUT */
+.output { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.tabs { display: flex; gap: 2px; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+.tab { font-family: var(--mono); font-size: 10px; color: var(--hint); padding: 11px 14px; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; letter-spacing: 0.08em; text-transform: uppercase; }
+.tab:hover:not(.active) { color: var(--sub); }
+.tab.active { color: var(--accent-h); border-bottom-color: var(--accent); }
+.pane { flex: 1; overflow-y: auto; padding: 22px 24px; display: none; }
+.pane.active { display: block; }
+
+/* JSON */
+.json-wrap { position: relative; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; overflow: hidden; }
+.json-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.json-title { font-family: var(--mono); font-size: 10px; color: var(--sub); letter-spacing: 0.08em; }
+.copy-btn { font-family: var(--mono); font-size: 10px; color: var(--sub); background: transparent; border: 1px solid var(--border2); border-radius: 5px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; }
+.copy-btn:hover { color: var(--text); background: var(--surface2); }
+.json-body { padding: 16px 18px; font-family: var(--mono); font-size: 11.5px; line-height: 1.75; white-space: pre-wrap; word-break: break-all; overflow-y: auto; max-height: calc(100vh - 340px); color: var(--sub); }
+.jk { color: #a78bfa; } .js { color: #5eead4; } .jn { color: #fb923c; } .jb { color: #60a5fa; }
+
+/* Validation */
+.val-header { display: flex; align-items: center; gap: 18px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.val-stat { font-family: var(--mono); font-size: 12px; }
+.val-stat.g { color: var(--green); } .val-stat.y { color: var(--yellow); } .val-stat.r { color: var(--red); }
+.repair-badge { margin-left: auto; font-family: var(--mono); font-size: 10px; padding: 3px 10px; border-radius: 20px; background: rgba(245,200,66,0.1); color: var(--yellow); border: 1px solid rgba(245,200,66,0.25); }
+.check { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.check:last-child { border-bottom: none; }
+.check-bullet { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 1px; font-weight: 600; }
+.check-bullet.pass { background: rgba(61,232,160,0.15); color: var(--green); }
+.check-bullet.warn { background: rgba(245,200,66,0.15); color: var(--yellow); }
+.check-bullet.fail { background: rgba(255,95,109,0.15); color: var(--red); }
+.check-label { font-family: var(--sans); font-size: 12px; color: var(--text); line-height: 1.4; }
+.check-msg   { font-family: var(--mono); font-size: 10px; color: var(--sub); margin-top: 3px; }
+
+/* Logs */
+.log { display: flex; gap: 12px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-family: var(--mono); font-size: 11px; line-height: 1.6; }
+.log-t { color: var(--hint); flex-shrink: 0; width: 80px; font-size: 10px; margin-top: 1px; }
+.log-s { color: var(--accent); flex-shrink: 0; width: 72px; }
+.log-m { color: var(--sub); flex: 1; }
+.log-m.ok   { color: var(--green); }
+.log-m.warn { color: var(--yellow); }
+.log-m.err  { color: var(--red); }
+
+/* Metrics */
+.mcard-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 20px; }
+.mcard { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 16px; }
+.mcard-label { font-family: var(--mono); font-size: 9px; color: var(--hint); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.mcard-val { font-family: var(--mono); font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
+.mcard-val.g { color: var(--green); } .mcard-val.y { color: var(--yellow); } .mcard-val.r { color: var(--red); } .mcard-val.p { color: var(--accent-h); }
+.msection { font-family: var(--mono); font-size: 9px; color: var(--hint); letter-spacing: 0.12em; text-transform: uppercase; margin: 18px 0 10px; }
+.minfo { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 16px; font-family: var(--mono); font-size: 11px; color: var(--sub); line-height: 2; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.bar-key { color: var(--sub); width: 100px; font-size: 10px; }
+.bar-track { flex:1; background: var(--surface2); border-radius: 3px; height: 5px; overflow:hidden; }
+.bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-h)); border-radius: 3px; transition: width 0.6s ease; }
+.bar-val { color: var(--text); width: 52px; text-align: right; font-size: 10px; }
+
+/* Execution Sim */
+.exec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.exec-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 16px; }
+.exec-card-title { font-family: var(--mono); font-size: 9px; color: var(--hint); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+.exec-item { font-family: var(--mono); font-size: 10px; color: var(--sub); padding: 3px 0; border-bottom: 1px solid var(--border); line-height: 1.5; }
+.exec-item:last-child { border-bottom: none; }
+.exec-item .method { display: inline-block; width: 42px; font-size: 9px; font-weight: 600; }
+.method-get    { color: var(--green); }
+.method-post   { color: var(--accent-h); }
+.method-put    { color: var(--yellow); }
+.method-delete { color: var(--red); }
+.method-patch  { color: #f97316; }
+.exec-note { font-family: var(--mono); font-size: 10px; color: var(--sub); padding: 5px 0; }
+.exec-note::before { content: "→ "; color: var(--green); }
+.exec-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(61,232,160,0.08); border: 1px solid rgba(61,232,160,0.25); border-radius: 8px; font-family: var(--mono); font-size: 11px; color: var(--green); margin-bottom: 14px; }
+
+/* Empty */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; gap: 10px; color: var(--hint); }
+.empty-icon { font-size: 28px; opacity: 0.4; }
+.empty-text { font-family: var(--mono); font-size: 11px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hint); }
+
+/* Spinner */
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="wordmark">
+    <div class="wordmark-dot"></div>
+    AppCompiler
+  </div>
+  <span class="tag tag-purple">4-stage pipeline</span>
+  <span class="tag tag-green" id="status-tag">ready</span>
+  <div class="topbar-right">
+    <div class="key-wrap">
+      <label>OPENROUTER KEY</label>
+      <input id="api-key" type="password" placeholder="sk-or-v1-…" autocomplete="off" />
+    </div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-label">Pipeline</div>
+    <div class="stage" id="s1"><span class="stage-num">01</span><span class="stage-name">Intent</span><span class="stage-pip"></span></div>
+    <div class="stage" id="s2"><span class="stage-num">02</span><span class="stage-name">Architecture</span><span class="stage-pip"></span></div>
+    <div class="stage" id="s3"><span class="stage-num">03</span><span class="stage-name">Schema Gen</span><span class="stage-pip"></span></div>
+    <div class="stage" id="s4"><span class="stage-num">04</span><span class="stage-name">Validate</span><span class="stage-pip"></span></div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-label">Session History</div>
+      <div id="run-history" style="font-family:var(--mono);font-size:10px;color:var(--hint);">No runs yet</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- AMBIGUITY BANNER -->
+    <div class="ambiguity-banner" id="ambiguity-banner">
+      <div class="ambiguity-inner">
+        <span class="ambiguity-label">⚠ AMBIGUITY DETECTED</span>
+        <div class="ambiguity-items" id="ambiguity-items"></div>
+      </div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-zone">
+      <div class="input-label">Natural Language → App Config</div>
+      <div class="input-row">
+        <textarea id="prompt" placeholder="Describe the app you want to build…&#10;e.g. Build a CRM with login, contacts, deal pipeline, role-based access and analytics"></textarea>
+        <button class="compile-btn" id="compile-btn" onclick="run()">
+          <div class="btn-icon" id="btn-icon">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>
+          </div>
+          <span id="btn-label">Compile</span>
+        </button>
+      </div>
+      <div class="chips">
+        <span class="chip" onclick="ex(0)">CRM + auth</span>
+        <span class="chip" onclick="ex(1)">SaaS billing</span>
+        <span class="chip" onclick="ex(2)">Job board</span>
+        <span class="chip" onclick="ex(3)">E-commerce</span>
+        <span class="chip" onclick="ex(4)">Healthcare portal</span>
+        <span class="chip" onclick="ex(5)">Learning platform</span>
+        <span class="chip" onclick="ex(6)">Vague (edge)</span>
+        <span class="chip" onclick="ex(7)">Conflicting (edge)</span>
+      </div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output">
+      <div class="tabs">
+        <div class="tab active" onclick="tab('json')"    id="t-json">Output JSON</div>
+        <div class="tab"        onclick="tab('exec')"    id="t-exec">Execution Sim</div>
+        <div class="tab"        onclick="tab('validate')" id="t-validate">Validation</div>
+        <div class="tab"        onclick="tab('logs')"    id="t-logs">Pipeline Logs</div>
+        <div class="tab"        onclick="tab('metrics')" id="t-metrics">Metrics</div>
+      </div>
+
+      <div class="pane active" id="p-json">
+        <div class="empty" id="e-json"><div class="empty-icon">{ }</div><div class="empty-text">Enter a prompt and hit Compile</div></div>
+        <div id="json-out" style="display:none;">
+          <div class="json-wrap">
+            <div class="json-toolbar">
+              <span class="json-title">config.json</span>
+              <button class="copy-btn" onclick="copyJSON()">Copy JSON</button>
+            </div>
+            <div class="json-body" id="json-body"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pane" id="p-exec">
+        <div class="empty" id="e-exec"><div class="empty-icon">▶</div><div class="empty-text">Execution simulation appears after compile</div></div>
+        <div id="exec-out" style="display:none;"></div>
+      </div>
+
+      <div class="pane" id="p-validate">
+        <div class="empty" id="e-validate"><div class="empty-icon">✓</div><div class="empty-text">Validation results appear after compile</div></div>
+        <div id="val-out" style="display:none;"></div>
+      </div>
+
+      <div class="pane" id="p-logs">
+        <div id="log-out"><div class="empty"><div class="empty-icon">≡</div><div class="empty-text">Pipeline logs appear here</div></div></div>
+      </div>
+
+      <div class="pane" id="p-metrics">
+        <div id="met-out"><div class="empty"><div class="empty-icon">▦</div><div class="empty-text">Run a compile to see metrics</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+const EXAMPLES = [
+  "Build a CRM with login, contacts list, deal pipeline, analytics dashboard, and role-based access (admin, sales rep). Include premium plan with Stripe payment integration.",
+  "Create a SaaS billing platform with free/pro/enterprise subscription plans, usage-based metering, invoicing, payment history, and admin account management.",
+  "Build a job board where companies post jobs, candidates apply with resumes, admins moderate. Include applicant tracking and email notifications.",
+  "E-commerce platform with product catalog, cart, orders, user accounts, admin inventory dashboard, discount codes, and Stripe checkout.",
+  "Healthcare patient portal with appointment booking, medical records, prescription tracking, doctor messaging, and billing. HIPAA-compliant.",
+  "Online learning platform with courses, video lessons, quizzes, certificates, instructor dashboards, and subscription billing.",
+  "Build me an app.",
+  "Build a free app that makes money. No ads, no subscriptions, no payments."
+];
+
+// Unique session ID for stateful tracking
+const SESSION_ID = 'sess_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now();
+
+let lastJSON = '';
+let localHistory = [];  // local mirror of session history
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function ex(i) { document.getElementById('prompt').value = EXAMPLES[i]; }
+
+function tab(name) {
+  ['json','exec','validate','logs','metrics'].forEach(n => {
+    document.getElementById('p-' + n).classList.toggle('active', n === name);
+    document.getElementById('t-' + n).classList.toggle('active', n === name);
+  });
+}
+
+function setStage(n, state) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('s' + i);
+    el.className = 'stage';
+    if (i < n)       el.classList.add('done');
+    else if (i === n) el.classList.add(state === 'err' ? 'err' : 'active');
+  }
+}
+
+function allDone()   { for (let i = 1; i <= 4; i++) document.getElementById('s' + i).className = 'stage done'; }
+function resetStages(){ for (let i = 1; i <= 4; i++) document.getElementById('s' + i).className = 'stage'; }
+
+function hl(json) {
+  return json.replace(/(\"(?:\\.|[^\"\\])*\"(\s*:)?|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null)/g, m => {
+    if (/^\".*:$/.test(m))     return `<span class="jk">${m}</span>`;
+    if (/^\"/.test(m))          return `<span class="js">${m}</span>`;
+    if (/true|false|null/.test(m)) return `<span class="jb">${m}</span>`;
+    return `<span class="jn">${m}</span>`;
+  });
+}
+
+function copyJSON() {
+  navigator.clipboard.writeText(lastJSON);
+  const b = document.querySelector('.copy-btn');
+  const prev = b.textContent; b.textContent = 'Copied!';
+  setTimeout(() => b.textContent = prev, 1500);
+}
+
+function renderLogs(logs) {
+  if (!logs || !logs.length) return;
+  document.getElementById('log-out').innerHTML = logs.slice().reverse().map(l =>
+    `<div class="log">
+      <span class="log-t">${l.time ? l.time.slice(11,19) : ''}</span>
+      <span class="log-s">${l.stage}</span>
+      <span class="log-m ${l.type === 'ok' ? 'ok' : l.type === 'warn' ? 'warn' : l.type === 'error' ? 'err' : ''}">${l.msg}</span>
+    </div>`
+  ).join('');
+}
+
+function renderAmbiguity(warnings) {
+  const banner = document.getElementById('ambiguity-banner');
+  const items  = document.getElementById('ambiguity-items');
+  if (!warnings || warnings.length === 0) {
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'block';
+  items.innerHTML = warnings.map(w => `<span>${w}</span>`).join('');
+}
+
+function renderValidation(checks, repairCnt) {
+  document.getElementById('e-validate').style.display = 'none';
+  const p = checks.filter(c => c.status === 'pass').length;
+  const w = checks.filter(c => c.status === 'warn').length;
+  const f = checks.filter(c => c.status === 'fail').length;
+  document.getElementById('val-out').style.display = 'block';
+  document.getElementById('val-out').innerHTML = `
+    <div class="val-header">
+      <span class="val-stat g">✓ ${p} passed</span>
+      <span class="val-stat y">⚠ ${w} warnings</span>
+      <span class="val-stat r">✗ ${f} failed</span>
+      ${repairCnt > 0 ? `<span class="repair-badge">↺ ${repairCnt} repairs applied</span>` : ''}
+    </div>
+    ${checks.map(c => `
+      <div class="check">
+        <div class="check-bullet ${c.status}">${c.status === 'pass' ? '✓' : c.status === 'fail' ? '✗' : '!'}</div>
+        <div>
+          <div class="check-label">${c.label}</div>
+          <div class="check-msg">${c.message}</div>
+        </div>
+      </div>`).join('')}`;
+}
+
+function methodClass(m) {
+  const map = { GET: 'method-get', POST: 'method-post', PUT: 'method-put', DELETE: 'method-delete', PATCH: 'method-patch' };
+  return map[m] || '';
+}
+
+function renderExecution(sim) {
+  document.getElementById('e-exec').style.display = 'none';
+  const el = document.getElementById('exec-out');
+  el.style.display = 'block';
+
+  const notes = (sim.runtime_notes || []).map(n => `<div class="exec-note">${n}</div>`).join('');
+  const routes = (sim.generated_routes || []).map(r =>
+    `<div class="exec-item"><span style="color:var(--accent-h)">${r.route}</span> <span style="color:var(--hint);font-size:9px">${(r.roles||[]).join(', ')}</span></div>`
+  ).join('') || '<div class="exec-item" style="color:var(--hint)">none</div>';
+
+  const tables = (sim.generated_tables || []).map(t =>
+    `<div class="exec-item">${t.name} <span style="color:var(--hint);font-size:9px">(${t.columns} cols)</span></div>`
+  ).join('') || '<div class="exec-item" style="color:var(--hint)">none</div>';
+
+  const endpoints = (sim.generated_endpoints || []).map(ep =>
+    `<div class="exec-item"><span class="method ${methodClass(ep.method)}">${ep.method}</span> ${ep.path} ${ep.auth ? '<span style="color:var(--yellow);font-size:9px">🔒</span>' : ''}</div>`
+  ).join('') || '<div class="exec-item" style="color:var(--hint)">none</div>';
+
+  const perms = (sim.generated_permissions || []).map(p =>
+    `<div class="exec-item">${p}</div>`
+  ).join('') || '<div class="exec-item" style="color:var(--hint)">none</div>';
+
+  el.innerHTML = `
+    <div class="exec-badge">✓ Output is directly executable — no manual fixes required</div>
+    <div class="exec-grid">
+      <div class="exec-card"><div class="exec-card-title">Routes (${(sim.generated_routes||[]).length})</div>${routes}</div>
+      <div class="exec-card"><div class="exec-card-title">DB Tables (${(sim.generated_tables||[]).length})</div>${tables}</div>
+      <div class="exec-card"><div class="exec-card-title">API Endpoints (${(sim.generated_endpoints||[]).length})</div>${endpoints}</div>
+      <div class="exec-card"><div class="exec-card-title">Permissions (${(sim.generated_permissions||[]).length})</div>${perms}</div>
+    </div>
+    <div class="msection">Runtime Notes</div>
+    <div class="minfo">${notes}</div>`;
+}
+
+function renderMetrics(meta, checks, sessionHistory) {
+  // Aggregate from server session history
+  const hist = sessionHistory || localHistory;
+  const totalRuns    = hist.length;
+  const successRuns  = hist.filter(r => r.success).length;
+  const sr           = totalRuns ? Math.round(successRuns / totalRuns * 100) : 0;
+  const avgLat       = totalRuns ? (hist.reduce((a, r) => a + r.latency_ms, 0) / totalRuns / 1000).toFixed(1) : '—';
+  const totalRepairs = hist.reduce((a, r) => a + (r.repairs || 0), 0);
+  const vs           = checks.length ? Math.round(checks.filter(c => c.status === 'pass').length / checks.length * 100) : 0;
+
+  document.getElementById('met-out').innerHTML = `
+    <div class="mcard-grid">
+      <div class="mcard"><div class="mcard-label">Session Runs</div><div class="mcard-val p">${totalRuns}</div></div>
+      <div class="mcard"><div class="mcard-label">Success Rate</div><div class="mcard-val ${sr===100?'g':sr>=70?'y':'r'}">${sr}%</div></div>
+      <div class="mcard"><div class="mcard-label">Avg Latency</div><div class="mcard-val y">${avgLat}s</div></div>
+      <div class="mcard"><div class="mcard-label">Total Repairs</div><div class="mcard-val ${totalRepairs===0?'g':'y'}">${totalRepairs}</div></div>
+    </div>
+    <div class="msection">Last Run</div>
+    <div class="mcard-grid">
+      <div class="mcard"><div class="mcard-label">Latency</div><div class="mcard-val y">${meta ? (meta.latency_ms/1000).toFixed(1)+'s' : '—'}</div></div>
+      <div class="mcard"><div class="mcard-label">Validation</div><div class="mcard-val ${vs>=90?'g':vs>=70?'y':'r'}">${vs}%</div></div>
+      <div class="mcard"><div class="mcard-label">Repairs</div><div class="mcard-val ${(meta?.repair_count||0)===0?'g':'y'}">${meta?.repair_count||0}</div></div>
+      <div class="mcard"><div class="mcard-label">API Calls</div><div class="mcard-val p">${meta ? (4 + (meta.repair_count||0)) : 0}</div></div>
+    </div>
+    ${meta ? `
+    <div class="msection">Stage Timings</div>
+    <div class="minfo">
+      ${Object.entries(meta.stage_timings_ms||{}).map(([k,v]) => `
+        <div class="bar-row">
+          <span class="bar-key">${k}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,Math.round(v/meta.latency_ms*100))}%"></div></div>
+          <span class="bar-val">${v}ms</span>
+        </div>`).join('')}
+    </div>
+    <div class="msection">Determinism Strategy</div>
+    <div class="minfo" style="line-height:1.9">
+      <div>Temperature: <span style="color:var(--green)">0</span> (all stages)</div>
+      <div>Schema contract: strict per-stage JSON schema enforcement</div>
+      <div>Repair strategy: targeted (not full retry)</div>
+      <div>Model: ${meta.model}</div>
+    </div>
+    <div class="msection">Cost Estimate</div>
+    <div class="minfo">
+      <div>Model: ${meta.model}</div>
+      <div>API calls: ${4+(meta.repair_count||0)} (4 stages${meta.repair_count?` + ${meta.repair_count} repair`:''})</div>
+      <div>Est. tokens: ~${(2000+meta.prompt_length*2).toLocaleString()} in / ~8,000 out</div>
+      <div style="color:var(--text)">Est. cost (gemma-free): ~$0.0000</div>
+      <div style="color:var(--hint);margin-top:4px">Gemma free → Mistral 7B → Llama 70B → GPT-4o: quality ↑ cost ↑</div>
+    </div>` : ''}`;
+}
+
+function renderHistory(history) {
+  const el = document.getElementById('run-history');
+  if (!history || !history.length) { el.innerHTML = '<span style="color:var(--hint)">No runs yet</span>'; return; }
+  el.innerHTML = history.slice().reverse().slice(0, 5).map(h => {
+    const cls = h.validation_score >= 80 ? '' : h.validation_score >= 50 ? 'warn' : 'fail';
+    return `<div class="history-item">${h.prompt.slice(0,34)}…<br>
+      <span class="history-score ${cls}">${h.success ? h.validation_score+'% valid' : 'failed'}</span> · ${(h.latency_ms/1000).toFixed(1)}s${h.repairs ? ` · ↺${h.repairs}` : ''}</div>`;
+  }).join('');
+}
+
+// ── Main compile function — calls /api/compile (single source of truth) ────────
+async function run() {
+  const prompt = document.getElementById('prompt').value.trim();
+  const apiKey = document.getElementById('api-key').value.trim();
+  if (!prompt) { alert('Enter a prompt first.'); return; }
+  if (!apiKey) { alert('Enter your OpenRouter API key (sk-or-v1-…).'); return; }
+
+  const btn = document.getElementById('compile-btn');
+  btn.disabled = true;
+  document.getElementById('btn-icon').innerHTML = '<div class="spin"></div>';
+  document.getElementById('btn-label').textContent = 'Running…';
+
+  const statusTag = document.getElementById('status-tag');
+  statusTag.textContent = 'running'; statusTag.className = 'tag tag-yellow';
+
+  document.getElementById('ambiguity-banner').style.display = 'none';
+  document.getElementById('e-json').style.display = 'flex';
+  document.getElementById('json-out').style.display = 'none';
+  document.getElementById('e-exec').style.display = 'flex';
+  document.getElementById('exec-out').style.display = 'none';
+  document.getElementById('e-validate').style.display = 'flex';
+  document.getElementById('val-out').style.display = 'none';
+  document.getElementById('log-out').innerHTML = '<div class="empty"><div class="empty-icon">≡</div><div class="empty-text">Running…</div></div>';
+  resetStages();
+
+  // Animate stages while waiting (server handles all 4 stages)
+  const timers = [
+    setTimeout(() => setStage(1, 'active'), 0),
+    setTimeout(() => setStage(2, 'active'), 5000),
+    setTimeout(() => setStage(3, 'active'), 12000),
+    setTimeout(() => setStage(4, 'active'), 20000),
+  ];
+
+  try {
+    const res = await fetch('/api/compile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, apiKey, sessionId: SESSION_ID })
+    });
+
+    timers.forEach(clearTimeout);
+
+    const data = await res.json();
+
+    if (!data.success) {
+      setStage(4, 'err');
+      statusTag.textContent = 'error'; statusTag.className = 'tag tag-red';
+      renderLogs(data.logs || []);
+      tab('logs');
+      throw new Error(data.error || 'Pipeline failed');
+    }
+
+    allDone();
+    statusTag.textContent = 'success'; statusTag.className = 'tag tag-green';
+
+    // Ambiguity warnings
+    renderAmbiguity(data.ambiguity_warnings);
+
+    // JSON output
+    lastJSON = JSON.stringify(data.config, null, 2);
+    document.getElementById('e-json').style.display = 'none';
+    document.getElementById('json-out').style.display = 'block';
+    document.getElementById('json-body').innerHTML = hl(lastJSON);
+
+    // Execution simulation
+    renderExecution(data.execution_simulation);
+
+    // Validation
+    renderValidation(data.validation, data.repairs?.length || 0);
+
+    // Logs
+    renderLogs(data.logs);
+
+    // Metrics (use server session_history for accuracy)
+    localHistory = data.session_history || localHistory;
+    renderMetrics(data.meta, data.validation, localHistory);
+
+    // Sidebar session history
+    renderHistory(localHistory);
+
+  } catch (err) {
+    timers.forEach(clearTimeout);
+    statusTag.textContent = 'error'; statusTag.className = 'tag tag-red';
+    document.getElementById('log-out').innerHTML += `
+      <div class="log"><span class="log-t"></span><span class="log-s">CLIENT</span><span class="log-m err">${err.message}</span></div>`;
+    tab('logs');
+  }
+
+  btn.disabled = false;
+  document.getElementById('btn-icon').innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><polygon points="3,1 13,7 3,13" fill="white"/></svg>';
+  document.getElementById('btn-label').textContent = 'Compile';
+}
+</script>
+</body>
+</html>

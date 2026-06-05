@@ -1,0 +1,11 @@
+{
+  "name": "app-compiler",
+  "version": "1.0.0",
+  "description": "Natural language to app config compiler — 4-stage LLM pipeline",
+  "main": "api/compile.js",
+  "scripts": {
+    "start": "node api/compile.js",
+    "deploy": "vercel --prod"
+  },
+  "engines": { "node": ">=18" }
+}

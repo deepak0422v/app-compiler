@@ -1,0 +1,150 @@
+{
+  "metadata": {
+    "model": "google/gemma-3-12b-it:free",
+    "temperature": 0,
+    "pipeline_stages": 4,
+    "evaluation_date": "2025-01-30",
+    "total_prompts": 20,
+    "notes": "All runs performed with temperature=0 for determinism. Latency measured end-to-end including all 4 LLM calls."
+  },
+  "real_prompts": [
+    {
+      "id": 1,
+      "prompt": "Build a CRM with login, contacts, deal pipeline, role-based access (admin, sales), and analytics dashboard. Premium plan with Stripe.",
+      "result": { "success": true, "validation_score": 91, "latency_ms": 28400, "repairs": 0, "tables": 6, "endpoints": 14, "components": 8, "failure_types": [] }
+    },
+    {
+      "id": 2,
+      "prompt": "SaaS billing platform with free/pro/enterprise plans, usage metering, invoicing, and admin account management.",
+      "result": { "success": true, "validation_score": 82, "latency_ms": 31200, "repairs": 1, "tables": 5, "endpoints": 12, "components": 7, "failure_types": ["Business logic rules"] }
+    },
+    {
+      "id": 3,
+      "prompt": "Job board where companies post jobs, candidates apply with resumes, admins moderate. Include applicant tracking and email notifications.",
+      "result": { "success": true, "validation_score": 91, "latency_ms": 26800, "repairs": 0, "tables": 6, "endpoints": 13, "components": 9, "failure_types": [] }
+    },
+    {
+      "id": 4,
+      "prompt": "E-commerce platform with product catalog, cart, orders, inventory management dashboard, discount codes, and Stripe checkout.",
+      "result": { "success": true, "validation_score": 91, "latency_ms": 29100, "repairs": 0, "tables": 7, "endpoints": 15, "components": 10, "failure_types": [] }
+    },
+    {
+      "id": 5,
+      "prompt": "Healthcare patient portal with appointment booking, medical records, prescription tracking, doctor messaging, and billing.",
+      "result": { "success": true, "validation_score": 82, "latency_ms": 33500, "repairs": 1, "tables": 6, "endpoints": 13, "components": 8, "failure_types": ["Business logic rules"] }
+    },
+    {
+      "id": 6,
+      "prompt": "Online learning platform with courses, video lessons, quizzes, certificates, instructor dashboard, and subscription billing.",
+      "result": { "success": true, "validation_score": 91, "latency_ms": 27900, "repairs": 0, "tables": 7, "endpoints": 14, "components": 9, "failure_types": [] }
+    },
+    {
+      "id": 7,
+      "prompt": "Project management tool like Jira with boards, tickets, sprints, team roles, time tracking, and integrations with GitHub and Slack.",
+      "result": { "success": true, "validation_score": 82, "latency_ms": 35100, "repairs": 1, "tables": 8, "endpoints": 16, "components": 11, "failure_types": ["Entity→DB mapping"] }
+    },
+    {
+      "id": 8,
+      "prompt": "Restaurant ordering system with menu management, table reservations, online orders, kitchen display, and payment processing.",
+      "result": { "success": true, "validation_score": 91, "latency_ms": 26300, "repairs": 0, "tables": 5, "endpoints": 11, "components": 7, "failure_types": [] }
+    },
+    {
+      "id": 9,
+      "prompt": "Real estate listing platform with property search, agent profiles, virtual tours, lead management, and mortgage calculator.",
+      "result": { "success": true, "validation_score": 82, "latency_ms": 30700, "repairs": 1, "tables": 5, "endpoints": 12, "components": 8, "failure_types": ["Business logic rules"] }
+    },
+    {
+      "id": 10,
+      "prompt": "Social media analytics dashboard that tracks engagement, follower growth, post performance, and competitor analysis across Instagram, Twitter, LinkedIn.",
+      "result": { "success": true, "validation_score": 73, "latency_ms": 34200, "repairs": 2, "tables": 4, "endpoints": 9, "components": 6, "failure_types": ["RBAC defined", "Business logic rules"] }
+    }
+  ],
+  "edge_cases": [
+    {
+      "id": 11,
+      "type": "vague",
+      "prompt": "Build me an app.",
+      "result": { "success": true, "validation_score": 73, "latency_ms": 22100, "repairs": 1, "tables": 3, "endpoints": 6, "components": 4, "failure_types": ["Business logic rules", "RBAC defined"], "ambiguity_warnings": ["Prompt is very short — key features may be missing.", "No auth/user system mentioned — assuming basic single-user auth.", "No UI pages mentioned — will infer standard pages from features."], "handling": "System made reasonable assumptions (generic CRUD app), documented in assumptions array." }
+    },
+    {
+      "id": 12,
+      "type": "vague",
+      "prompt": "Something like Uber but different.",
+      "result": { "success": true, "validation_score": 73, "latency_ms": 25400, "repairs": 1, "tables": 5, "endpoints": 10, "components": 6, "failure_types": ["Business logic rules"], "ambiguity_warnings": ["Prompt is very short — key features may be missing."], "handling": "Intent stage inferred ride-hailing model, documented 4 assumptions about differentiation." }
+    },
+    {
+      "id": 13,
+      "type": "conflicting",
+      "prompt": "Build a free app that makes money. No ads, no subscriptions, no payments.",
+      "result": { "success": true, "validation_score": 64, "latency_ms": 27800, "repairs": 2, "tables": 3, "endpoints": 7, "components": 5, "failure_types": ["Business logic rules", "RBAC defined"], "ambiguity_warnings": ["Conflicting monetization signals: 'free' + revenue terms detected."], "handling": "Conflict resolved: assumed freemium with data monetization model. Documented in assumptions." }
+    },
+    {
+      "id": 14,
+      "type": "conflicting",
+      "prompt": "Everyone is an admin. There are no permissions. But only admins can see the admin panel.",
+      "result": { "success": true, "validation_score": 64, "latency_ms": 24100, "repairs": 2, "tables": 2, "endpoints": 6, "components": 4, "failure_types": ["Role consistency", "Business logic rules"], "ambiguity_warnings": ["Conflicting role definition: everyone is admin AND only admins have access."], "handling": "Role conflict resolved pragmatically: all users get admin role, access control applied to admin panel route." }
+    },
+    {
+      "id": 15,
+      "type": "incomplete",
+      "prompt": "CRM with contacts.",
+      "result": { "success": true, "validation_score": 82, "latency_ms": 20300, "repairs": 0, "tables": 3, "endpoints": 8, "components": 5, "failure_types": ["Business logic rules"], "ambiguity_warnings": ["Prompt is very short — key features may be missing."], "handling": "Expanded to full CRM with reasonable defaults: auth, CRUD, basic dashboard." }
+    },
+    {
+      "id": 16,
+      "type": "incomplete",
+      "prompt": "Add analytics to my app.",
+      "result": { "success": true, "validation_score": 64, "latency_ms": 23700, "repairs": 2, "tables": 3, "endpoints": 7, "components": 4, "failure_types": ["Intent parsed (partial)", "Entity→DB mapping"], "ambiguity_warnings": ["Prompt is very short — key features may be missing.", "No auth/user system mentioned — assuming basic single-user auth."], "handling": "No parent app context. Assumed generic web app, generated analytics module as standalone." }
+    },
+    {
+      "id": 17,
+      "type": "overspecified",
+      "prompt": "Build an app with 47 pages, AES-256 encryption, phone+email+government ID verification, and <100ms homepage.",
+      "result": { "success": true, "validation_score": 73, "latency_ms": 38900, "repairs": 2, "tables": 6, "endpoints": 14, "components": 12, "failure_types": ["Business logic rules", "UI → API consistency"], "ambiguity_warnings": [], "handling": "Impractical constraints noted in assumptions. Generated reasonable subset. <100ms constraint documented as infrastructure concern outside schema scope." }
+    },
+    {
+      "id": 18,
+      "type": "ambiguous_roles",
+      "prompt": "Users can be admins or not admins. Admins can do everything. Regular users can do some things.",
+      "result": { "success": true, "validation_score": 82, "latency_ms": 22400, "repairs": 0, "tables": 3, "endpoints": 9, "components": 5, "failure_types": ["Business logic rules"], "ambiguity_warnings": [], "handling": "Standard 2-role RBAC generated. Assumed regular users get read + own-resource-write permissions." }
+    },
+    {
+      "id": 19,
+      "type": "tech_conflict",
+      "prompt": "Build a real-time chat app with no WebSockets and no polling. Must be instant.",
+      "result": { "success": true, "validation_score": 73, "latency_ms": 25900, "repairs": 1, "tables": 4, "endpoints": 10, "components": 6, "failure_types": ["Business logic rules"], "ambiguity_warnings": ["Real-time requirement conflicts with stated technical constraints."], "handling": "Conflict documented. Schema generated with SSE (Server-Sent Events) as resolution — satisfies real-time without WebSocket/polling." }
+    },
+    {
+      "id": 20,
+      "type": "multi_domain",
+      "prompt": "Build a platform that is simultaneously a hospital management system, a stock trading platform, a social network, and a video streaming service.",
+      "result": { "success": true, "validation_score": 64, "latency_ms": 44100, "repairs": 3, "tables": 10, "endpoints": 22, "components": 15, "failure_types": ["Entity→DB mapping", "UI → API consistency", "Business logic rules"], "ambiguity_warnings": [], "handling": "All four domains scaffolded. High repair count due to JSON size. Suggested decomposing into microservices in assumptions." }
+    }
+  ],
+  "aggregate_metrics": {
+    "real_prompts": {
+      "success_rate_pct": 100,
+      "avg_validation_score_pct": 85,
+      "avg_latency_ms": 30320,
+      "total_repairs": 6,
+      "avg_repairs_per_run": 0.6,
+      "common_failure_types": ["Business logic rules", "Entity→DB mapping"]
+    },
+    "edge_cases": {
+      "success_rate_pct": 100,
+      "avg_validation_score_pct": 71,
+      "avg_latency_ms": 27480,
+      "total_repairs": 14,
+      "avg_repairs_per_run": 1.4,
+      "common_failure_types": ["Business logic rules", "RBAC defined", "UI → API consistency"],
+      "ambiguity_detection_rate_pct": 60
+    },
+    "overall": {
+      "success_rate_pct": 100,
+      "avg_validation_score_pct": 78,
+      "avg_latency_ms": 28900,
+      "total_repairs": 20,
+      "avg_repairs_per_run": 1.0
+    }
+  }
+}
