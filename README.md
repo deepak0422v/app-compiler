@@ -52,7 +52,6 @@ User Prompt
 Final Config JSON (directly usable — no manual fixes)
 ```
 
-Build a CRM with login, contacts, deal pipeline, analytics dashboard, role-based access, and Stripe payment integration.
 Each stage is a **separate LLM call** with a strict JSON output contract.  
 The repair engine detects invalid JSON and schema mismatches and fixes them **surgically** (not full retry).
 
@@ -230,3 +229,35 @@ The system is model-agnostic — swap the `MODEL` constant in `api/compile.js` t
 - ✅ Stateful session tracking (run history, metrics)
 - ✅ Temperature = 0 for determinism
 - ✅ All assumptions documented in output
+
+## Example Input
+
+Build a CRM with login, contacts, deal pipeline, analytics dashboard, role-based access, and Stripe payment integration.
+
+## Generated Output
+
+- Application Architecture
+- Database Schema
+- REST API Specifications
+- UI Components
+- User Roles & Permissions
+- Business Rules
+- Validation Report
+
+## Tech Stack
+
+- JavaScript
+- OpenRouter API
+- Vercel
+- REST APIs
+- JSON Processing
+- LLM-Based Structured Generation
+
+## Challenges Solved
+
+- Structured JSON generation from LLMs
+- Ambiguous requirement handling
+- Multi-stage AI orchestration
+- Cross-layer consistency validation
+- Automatic repair of malformed outputs
+- Serverless deployment optimization
