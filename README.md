@@ -6,6 +6,25 @@ Live Demo:
 https://app-compiler-seven.vercel.app
 ---
 
+# AI App Compiler
+
+AI App Compiler is a multi-stage LLM-powered system that transforms natural language application requirements into validated software blueprints.
+
+Instead of generating output through a single AI prompt, the system follows a compiler-style pipeline that progressively converts user requirements into structured application specifications, including architecture design, database schemas, API definitions, UI components, business rules, and validation reports.
+
+## Features
+
+- Natural language requirement analysis
+- Intent extraction and feature identification
+- Application architecture generation
+- Database schema generation
+- REST API specification generation
+- UI component definition generation
+- Ambiguity detection and assumption handling
+- Cross-layer validation (UI → API → Database)
+- Automatic JSON repair and consistency checks
+- Execution simulation and validation scoring
+
 ## Architecture
 
 ```
@@ -33,6 +52,7 @@ User Prompt
 Final Config JSON (directly usable — no manual fixes)
 ```
 
+Build a CRM with login, contacts, deal pipeline, analytics dashboard, role-based access, and Stripe payment integration.
 Each stage is a **separate LLM call** with a strict JSON output contract.  
 The repair engine detects invalid JSON and schema mismatches and fixes them **surgically** (not full retry).
 
