@@ -2,11 +2,11 @@
 
 Natural language → structured config → validated → executable app schema.
 
-# Live Demo:
+Live Demo:
 https://app-compiler-seven.vercel.app
 ---
 
-# Preview:
+Preview:
 <h1 align="center">AI App Compiler</h1>
 
 <p align="center">
