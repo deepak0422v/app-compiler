@@ -6,7 +6,6 @@ Live Demo:
 https://app-compiler-seven.vercel.app
 ---
 
-Preview:
 <h1 align="center">AI App Compiler</h1>
 
 <p align="center">
